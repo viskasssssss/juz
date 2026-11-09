@@ -43,6 +43,10 @@ int shell_run() {
             continue;
         }
         ASTNode* ast = parser_parse(par);
+        if (ast == NULL) {
+            printf("Something went wrong, continuing...\n");
+            continue;
+        }
         char* fmt_ast = fmt_ast_node(ast);
         if (fmt_ast != NULL) {
             printf("%s ", fmt_ast);

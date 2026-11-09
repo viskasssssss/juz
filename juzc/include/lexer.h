@@ -21,7 +21,8 @@ typedef enum {
 typedef struct {
     TokenType type;
     const char* value;
-    Span pos;
+    Span start;
+    Span end;
 } Token;
 
 typedef struct {
@@ -41,7 +42,8 @@ typedef struct {
 
 TokenArray* token_array_new();
 
-int token_array_append(TokenArray* arr, TokenType type, const char* val, Span pos);
+int token_array_append_operator(TokenArray* arr, TokenType type, const char* val, Span pos);
+int token_array_append(TokenArray* arr, TokenType type, const char* val, Span start, Span end);
 
 // make sure the free(result) is called after calling fmt_token(...)!
 char* fmt_token(Token self);
@@ -50,7 +52,7 @@ Lexer* lexer_new(const char* source);
 
 void lexer_advance(Lexer* self);
 
-void lexer_make_number(Lexer* self);
+int lexer_make_number(Lexer* self);
 
 TokenArray* lexer_make_tokens(Lexer* self);
 

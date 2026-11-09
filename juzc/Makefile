@@ -1,6 +1,6 @@
 exec = juzc.out
 sources = $(wildcard src/*.c)
-objects = $(sources:src=work.c=.o)
+objects = $(sources:src/%.c=src/%.o)
 flags = -g -Iinclude
 
 $(exec): $(objects)
@@ -9,6 +9,7 @@ $(exec): $(objects)
 src/%.o: src/%.c include/%.h
 	gcc -c $(flags) $< -o $@
 
+.PHONY: clean
 clean:
 	-rm -f $(exec)
 	-rm -f src/*.o

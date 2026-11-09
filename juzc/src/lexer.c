@@ -19,7 +19,7 @@ TokenArray* token_array_new() {
     return arr;
 }
 
-int token_array_append(TokenArray* arr, TokenType type, const char* val, Span pos) {
+int token_array_append_operator(TokenArray* arr, TokenType type, const char* val, Span pos) {
     if (arr->size >= arr->capacity) {
         int new_cap = arr->capacity + TOKEN_ARR_CHUNK_CAPACITY;
         Token* temp = (Token*)realloc(arr->data, new_cap * sizeof(Token));
@@ -33,7 +33,29 @@ int token_array_append(TokenArray* arr, TokenType type, const char* val, Span po
 
     arr->data[arr->size].type = type;
     arr->data[arr->size].value = strdup(val);
-    arr->data[arr->size].pos = pos;
+    arr->data[arr->size].start = pos;
+    arr->data[arr->size].end = pos;
+    arr->size++;
+    
+    return 1;
+}
+
+int token_array_append(TokenArray* arr, TokenType type, const char* val, Span start, Span end) {
+    if (arr->size >= arr->capacity) {
+        int new_cap = arr->capacity + TOKEN_ARR_CHUNK_CAPACITY;
+        Token* temp = (Token*)realloc(arr->data, new_cap * sizeof(Token));
+        if (!temp) {
+            printf("Token array extend failure\n");
+            return 0;
+        }
+        arr->data = temp;
+        arr->capacity = new_cap;
+    }
+
+    arr->data[arr->size].type = type;
+    arr->data[arr->size].value = strdup(val);
+    arr->data[arr->size].start = start;
+    arr->data[arr->size].end = end;
     arr->size++;
     
     return 1;
@@ -85,25 +107,39 @@ void lexer_advance(Lexer* self) {
     }
 }
 
-void lexer_make_number(Lexer* self) {
+int lexer_make_number(Lexer* self) {
+    Span start = self->span;
     DynamicString* num_str = create_string(1);
     int dot_count = 0;
+    int last_dot = 0;
 
     while (self->current != '\0' && (
         isdigit(self->current) || 
         self->current == '.'
     )) {
+        last_dot = 0;
         if (self->current == '.') {
             dot_count += 1;
+            last_dot = 1;
         }
         append_string(num_str, (char[]){self->current, '\0'});
         lexer_advance(self);
     }
+    if (last_dot) {
+        show_error(
+            ERROR_INVALID_SYNTAX, 
+            self->span, self->span, 
+            "Expected floating point constant"
+        );
+        return 1;
+    }
 
     if (dot_count == 0) {
-        token_array_append(self->tokens, TT_INT, num_str->buffer, self->span);
+        token_array_append(self->tokens, TT_INT, num_str->buffer, start, self->span);
+        return 0;
     } else {
-        token_array_append(self->tokens, TT_FLOAT, num_str->buffer, self->span);
+        token_array_append(self->tokens, TT_FLOAT, num_str->buffer, start, self->span);
+        return 0;
     }
 }
 
@@ -116,28 +152,28 @@ TokenArray* lexer_make_tokens(Lexer* self) {
         if (strchr(" \t", self->current) != NULL) {
             lexer_advance(self);
         } else if (isdigit(self->current)) {
-            lexer_make_number(self);
+            if (lexer_make_number(self)) return NULL;
         } else if (self->current == '+') {
-            token_array_append(self->tokens, TT_PLUS, "+", self->span); lexer_advance(self);
+            token_array_append_operator(self->tokens, TT_PLUS, "+", self->span); lexer_advance(self);
         } else if (self->current == '-') {
-            token_array_append(self->tokens, TT_MINUS, "-", self->span); lexer_advance(self);
+            token_array_append_operator(self->tokens, TT_MINUS, "-", self->span); lexer_advance(self);
         } else if (self->current == '*') {
-            token_array_append(self->tokens, TT_MUL, "*", self->span); lexer_advance(self);
+            token_array_append_operator(self->tokens, TT_MUL, "*", self->span); lexer_advance(self);
         } else if (self->current == '/') {
-            token_array_append(self->tokens, TT_DIV, "/", self->span); lexer_advance(self);
+            token_array_append_operator(self->tokens, TT_DIV, "/", self->span); lexer_advance(self);
         } else if (self->current == '(') {
-            token_array_append(self->tokens, TT_LPAREN, "(", self->span); lexer_advance(self);
+            token_array_append_operator(self->tokens, TT_LPAREN, "(", self->span); lexer_advance(self);
         } else if (self->current == ')') {
-            token_array_append(self->tokens, TT_RPAREN, ")", self->span); lexer_advance(self);
+            token_array_append_operator(self->tokens, TT_RPAREN, ")", self->span); lexer_advance(self);
         } else {
             char details[4] = { '\"', self->current, '\"', '\0' };
             const char *ptr = details; 
-            show_error(ERROR_UNKNOWN_CHARACTER, self->span, ptr);
+            show_error(ERROR_UNKNOWN_CHARACTER, self->span, self->span, ptr);
             return NULL;
         }
         
     }
-    //token_array_append(self->tokens, TT_EOF, " ", self->span);
+    token_array_append_operator(self->tokens, TT_EOF, " ", self->span);
     return self->tokens;
 }
 

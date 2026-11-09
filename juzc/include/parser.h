@@ -5,7 +5,8 @@
 
 typedef enum {
     NODE_NUMBER,
-    NODE_BINOP
+    NODE_BINOP,
+    NODE_UNARYOP,
 } NodeType;
 
 typedef struct {
@@ -25,9 +26,16 @@ typedef struct {
 } BinOpNode;
 
 typedef struct {
+    ASTNode base;
+    Token op_tok;
+    ASTNode* node;
+} UnaryOpNode;
+
+typedef struct {
     TokenArray* tokens;
     Token current;
     long pos;
+    Error error;
 } Parser;
 
 char* fmt_ast_node(ASTNode* self);
