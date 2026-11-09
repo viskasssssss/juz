@@ -18,6 +18,8 @@ int shell_run() {
             break;
         }
 
+        diag_setup(input);
+
         Lexer* lex = lexer_new(input);
         if (lex == NULL) {
             printf("Something went wrong, continuing...\n");
@@ -55,5 +57,6 @@ int shell_run() {
         printf("\n");
         lexer_free(lex);
         free(par);
+        diag_free();
     }
 }

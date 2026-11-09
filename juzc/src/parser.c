@@ -180,8 +180,8 @@ ASTNode* parser_factor(Parser* self) {
         } else {
             self->error = (Error) {
                 ERROR_INVALID_SYNTAX,
-                tok.start,
-                tok.end,
+                self->current.start,
+                self->current.end,
                 "Expected \")\"", // TODO: but got...
                 1
             };
