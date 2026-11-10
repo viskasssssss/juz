@@ -15,6 +15,8 @@ DynamicString* create_string(size_t initial_capacity);
 
 int append_string(DynamicString *ds, const char *text);
 
+int string_compare(const DynamicString *ds1, const DynamicString *ds2);
+
 void free_string(DynamicString *ds);
 
 #endif

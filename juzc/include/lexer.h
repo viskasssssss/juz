@@ -6,9 +6,17 @@
 #define TOKEN_ARR_CHUNK_CAPACITY 4
 #define DIGITS "0123456789"
 
+#define KEYWORDS_SIZE 1
+
+extern const char* const KEYWORDS[KEYWORDS_SIZE];
+
 typedef enum {
     TT_INT = 0,
     TT_FLOAT,
+    TT_IDENTIFIER,
+    TT_KEYWORD,
+    TT_EQUAL,
+    TT_COLON,
     TT_PLUS,
     TT_MINUS,
     TT_MUL,
@@ -48,11 +56,15 @@ int token_array_append(TokenArray* arr, TokenType type, const char* val, Span st
 // make sure the free(result) is called after calling fmt_token(...)!
 char* fmt_token(Token self);
 
+int tokcmp(Token a, TokenType t, const char* v);
+
 Lexer* lexer_new(const char* source);
 
 void lexer_advance(Lexer* self);
 
 int lexer_make_number(Lexer* self);
+
+int lexer_make_identifier(Lexer* self);
 
 TokenArray* lexer_make_tokens(Lexer* self);
 

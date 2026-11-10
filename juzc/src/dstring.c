@@ -36,6 +36,14 @@ int append_string(DynamicString *ds, const char *text) {
     ds->length += text_len;
     return 1;
 }
+
+int string_compare(const DynamicString *ds1, const DynamicString *ds2) {
+    if (!ds1 && !ds2) return 0;
+    if (!ds1) return -1;
+    if (!ds2) return 1;
+    return strcmp(ds1->buffer, ds2->buffer);
+}
+
 void free_string(DynamicString *ds) {
     if (ds) {
         free(ds->buffer);

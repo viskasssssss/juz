@@ -7,6 +7,8 @@ typedef enum {
     NODE_NUMBER,
     NODE_BINOP,
     NODE_UNARYOP,
+    NODE_VAR_ACCESS,
+    NODE_VAR_DEF,
 } NodeType;
 
 typedef struct {
@@ -32,6 +34,18 @@ typedef struct {
 } UnaryOpNode;
 
 typedef struct {
+    ASTNode base;
+    Token name;
+} VarAccessNode;
+
+typedef struct {
+    ASTNode base;
+    Token name;
+    Token type;
+    ASTNode* val;
+} VarDefNode;
+
+typedef struct {
     TokenArray* tokens;
     Token current;
     long pos;
@@ -45,6 +59,8 @@ Parser* parser_new(TokenArray* tokens);
 ASTNode* parser_parse(Parser* self);
 
 ASTNode* parser_bin_op(Parser* self, ASTNode* (*func)(Parser*), TokenType (*ops)[2]);
+
+ASTNode* parser_atom(Parser* self);
 
 ASTNode* parser_factor(Parser* self);
 

@@ -4,6 +4,10 @@
 #include <string.h>
 #include <ctype.h>
 
+const char* const KEYWORDS[KEYWORDS_SIZE] = {
+    "let"
+};
+
 TokenArray* token_array_new() {
     TokenArray* arr = (TokenArray*)malloc(sizeof(TokenArray));
     if (!arr) return NULL;
@@ -73,6 +77,10 @@ char* fmt_token(Token self) {
     }
 }
 
+int tokcmp(Token a, TokenType t, const char* v) {
+    return (int) a.type == (int) t && strcmp(a.value, v) == 0;
+}
+
 Lexer* lexer_new(const char* source) {
     long len = strlen(source);
     if (len <= 0) {
@@ -134,6 +142,7 @@ int lexer_make_number(Lexer* self) {
         return 1;
     }
 
+    
     if (dot_count == 0) {
         token_array_append(self->tokens, TT_INT, num_str->buffer, start, self->span);
         return 0;
@@ -141,6 +150,31 @@ int lexer_make_number(Lexer* self) {
         token_array_append(self->tokens, TT_FLOAT, num_str->buffer, start, self->span);
         return 0;
     }
+}
+
+int lexer_make_identifier(Lexer* self) {
+    Span start = self->span;
+    DynamicString* id_str = create_string(1);
+
+    while (self->current != '\0' && (
+        isalpha(self->current) || isdigit(self->current) ||
+        self->current == '_' || self->current == '-'
+    )) {
+        append_string(id_str, (char[]){self->current, '\0'});
+        lexer_advance(self);
+    }
+
+    TokenType type = TT_IDENTIFIER;
+
+    for (int i = 0; i < KEYWORDS_SIZE; i++) {
+        if (strcmp(id_str->buffer, KEYWORDS[i]) == 0) {
+            type = TT_KEYWORD;
+            break;
+        }
+    }
+
+    token_array_append(self->tokens, type, id_str->buffer, start, self->span);
+    return 0;
 }
 
 TokenArray* lexer_make_tokens(Lexer* self) {
@@ -153,6 +187,12 @@ TokenArray* lexer_make_tokens(Lexer* self) {
             lexer_advance(self);
         } else if (isdigit(self->current)) {
             if (lexer_make_number(self)) return NULL;
+        } else if (isalpha(self->current)) {
+            if (lexer_make_identifier(self)) return NULL;
+        } else if (self->current == '=') {
+            token_array_append_operator(self->tokens, TT_EQUAL, "=", self->span); lexer_advance(self);
+        } else if (self->current == ':') {
+            token_array_append_operator(self->tokens, TT_COLON, ":", self->span); lexer_advance(self);
         } else if (self->current == '+') {
             token_array_append_operator(self->tokens, TT_PLUS, "+", self->span); lexer_advance(self);
         } else if (self->current == '-') {
